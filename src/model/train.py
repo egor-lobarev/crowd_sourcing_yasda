@@ -131,6 +131,19 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
     
     criterion = nn.BCEWithLogitsLoss()
     
+    # Load checkpoint if exists to continue training
+    checkpoint_path = Path(f'src/model/best_model_{model_type}_{model_name if model_type == "pretrained" else "unet"}.pth')
+    if checkpoint_path.exists():
+        print(f'Found checkpoint at {checkpoint_path}')
+        print('Loading checkpoint to continue training from fine-tuned weights...')
+        try:
+            model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+            print('✓ Checkpoint loaded successfully - continuing training from fine-tuned model')
+        except Exception as e:
+            print(f'⚠ Warning: Could not load checkpoint ({e}). Starting from pretrained weights instead.')
+    else:
+        print('No checkpoint found - starting from ImageNet pretrained weights')
+    
     # Tensorboard
     run_name = f'tree_classifier_{model_type}_{model_name if model_type == "pretrained" else "unet"}'
     writer = SummaryWriter(f'runs/{run_name}')

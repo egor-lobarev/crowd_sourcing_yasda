@@ -1,3 +1,6 @@
+#models
+*pth
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -53,6 +56,7 @@ coverage.xml
 # Downloaded images
 src/data/images/
 src/data/gt/images/
+src/data/raw/images/
 cover/
 
 # Translations

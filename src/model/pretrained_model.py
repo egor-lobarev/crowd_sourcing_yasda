@@ -10,14 +10,23 @@ class PretrainedTreeClassifier(nn.Module):
     def __init__(self, model_name='swin_tiny_patch4_window7_224', num_classes=2, img_size=128, dropout=0.3):
         super(PretrainedTreeClassifier, self).__init__()
         
+        # Some models (like Swin) support img_size, others (like ConvNeXt) don't
+        # Models that support img_size: swin, vision_transformer, etc.
+        supports_img_size = 'swin' in model_name.lower() or 'vit' in model_name.lower()
+        
         # Create pretrained model
-        self.backbone = timm.create_model(
-            model_name,
-            pretrained=True,
-            num_classes=0,  # Remove default classifier
-            in_chans=3,
-            img_size=img_size
-        )
+        model_kwargs = {
+            'pretrained': True,
+            'num_classes': 0,  # Remove default classifier
+            'in_chans': 3,
+        }
+        
+        # Only add img_size for models that support it
+        if supports_img_size:
+            model_kwargs['img_size'] = img_size
+        
+        self.backbone = timm.create_model(model_name, **model_kwargs)
+        self.img_size = img_size
         
         # Get feature dimension
         with torch.no_grad():
