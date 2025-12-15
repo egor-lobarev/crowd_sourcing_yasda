@@ -1,0 +1,90 @@
+<style>
+  .instruction-container { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; }
+  h1 { text-align: center; color: #2c3e50; }
+  
+  .category-box { border: 2px solid #ccc; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+  .cat-header { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; display: block; }
+  
+  .coniferous-box { background-color: #e8f5e9; border-color: #2e7d32; }
+  .coniferous-title { color: #2e7d32; }
+  
+  .deciduous-box { background-color: #fff3e0; border-color: #ef6c00; } 
+  .deciduous-title { color: #ef6c00; }
+  
+  .bad-box { background-color: #ffebee; border-color: #c62828; }
+  .bad-title { color: #c62828; }
+
+  .examples-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .examples-table td { width: 33%; vertical-align: top; padding: 5px; border: 1px solid #ddd; background: #fff; }
+  .examples-table img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
+  
+  .hotkey { display: inline-block; background: #333; color: #fff; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+  .edge-cases { background: #e3f2fd; padding: 15px; border-left: 5px solid #2196f3; margin-top: 20px; }
+</style>
+
+<div class="instruction-container">
+  <h1>🌲 Классификация деревьев: Хвойное или Лиственное?</h1>
+  <p>Посмотрите на <strong>основное</strong> дерево на изображении (которое находится в центре или занимает большую часть кадра) и определите его тип.</p>
+
+  <div class="category-box coniferous-box">
+    <span class="cat-header coniferous-title">Клавиша <span class="hotkey">1</span> — ХВОЙНЫЕ (Coniferous)</span>
+    <p>Деревья с иголками. Обычно вечнозеленые.</p>
+    <ul>
+      <li><strong>Виды:</strong> Ель, Сосна, Пихта, Кедр, Туя.</li>
+      <li><strong>Признаки:</strong> Иголки вместо листьев, шишки, смола.</li>
+      <li><strong>Зимой:</strong> Остаются зелеными (кроме лиственницы).</li>
+    </ul>
+    <table class="examples-table">
+      <tr>
+        <td><img src="https://example.com/pine.jpg" alt="Сосна"></td>
+        <td><img src="https://example.com/spruce.jpg" alt="Ель"></td>
+        <td><img src="https://example.com/winter_pine.jpg" alt="Зима"></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="category-box deciduous-box">
+    <span class="cat-header deciduous-title">Клавиша <span class="hotkey">2</span> — ЛИСТВЕННЫЕ (Deciduous)</span>
+    <p>Деревья с широкими плоскими листьями.</p>
+    <ul>
+      <li><strong>Виды:</strong> Береза, Дуб, Клен, Осина, Липа.</li>
+      <li><strong>Признаки:</strong> Листья, сережки, цветы.</li>
+      <li><strong>Зимой (ВАЖНО!):</strong> Стоят <strong>голые</strong> (без листьев). Виден только ствол и ветки. Если вы видите голое дерево без иголок — это ЛИСТВЕННОЕ.</li>
+    </ul>
+    <table class="examples-table">
+      <tr>
+        <td><img src="https://example.com/birch.jpg" alt="Береза"></td>
+        <td><img src="https://example.com/oak_autumn.jpg" alt="Осень"></td>
+        <td><img src="https://example.com/winter_naked.jpg" alt="Зима (Голые ветки)"></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="category-box bad-box">
+    <span class="cat-header bad-title">Клавиша <span class="hotkey">3</span> — НЕ ДЕРЕВО / НЕПОНЯТНО</span>
+    <p>Выбирайте этот вариант, если:</p>
+    <ul>
+      <li>На фото <strong>куст</strong> (нет явного ствола).</li>
+      <li>На фото трава, цветы, пеньки, бревна.</li>
+      <li>Изображение испорчено (размыто, слишком темно, черный экран).</li>
+      <li><strong>Спорный случай:</strong> Смешанный лес 50/50, где нельзя выделить главное дерево.</li>
+      <li>Дерево слишком далеко (часть фона).</li>
+    </ul>
+  </div>
+
+  <div class="edge-cases">
+    <h3>🤔 Сложные ситуации (FAQ)</h3>
+    <p><strong>В: На фото зима, просто торчат палки.</strong><br>
+    <strong>О:</strong> Если иголок нет — это <strong>Лиственное (2)</strong>.</p>
+
+    <p><strong>В: Видно и елку, и березу.</strong><br>
+    <strong>О:</strong> Оценивайте то дерево, которое <strong>ближе к камере</strong> или занимает <strong>большую площадь</strong>.</p>
+
+    <p><strong>В: Это новогодняя елка с игрушками.</strong><br>
+    <strong>О:</strong> Это все равно <strong>Хвойное (1)</strong>.</p>
+    
+    <p><strong>В: Фото черно-белое.</strong><br>
+    <strong>О:</strong> Ориентируйтесь на форму кроны и тип листвы (иголки vs листья/ветки).</p>
+  </div>
+</div>
