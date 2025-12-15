@@ -49,6 +49,10 @@ coverage.xml
 *.py.cover
 .hypothesis/
 .pytest_cache/
+
+# Downloaded images
+src/data/images/
+src/data/gt/images/
 cover/
 
 # Translations
