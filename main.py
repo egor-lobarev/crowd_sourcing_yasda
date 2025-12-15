@@ -1,7 +1,7 @@
-import os
 import requests
 import pandas as pd
 from pathlib import Path
+import argparse
 
 def download_images():
     """Download images from URLs in hw_3_markup_data.txt and save to src/data/gt/images/"""
@@ -55,5 +55,86 @@ def download_images():
     print(f'\nDownload complete. {len(data)} images processed.')
     print(f'Labels saved to {labels_file}')
 
+def download_no_markup_images():
+    """Download images from URLs in hw_3_no_markup_data.txt and save to src/data/raw/images/"""
+    data_dir = Path('src/data/raw')
+    images_dir = data_dir / 'images'
+    images_dir.mkdir(parents=True, exist_ok=True)
+    
+    no_markup_file = data_dir / 'hw_3_no_markup_data.txt'
+    
+    if not no_markup_file.exists():
+        print(f'Error: {no_markup_file} not found!')
+        return
+    
+    with open(no_markup_file, 'r') as f:
+        lines = f.readlines()[1:]  # Skip header
+    
+    downloaded = 0
+    skipped = 0
+    failed = 0
+    
+    for i, line in enumerate(lines):
+        if not line.strip():
+            continue
+        
+        url = line.strip()
+        if not url.startswith('http'):
+            print(f'Skipping invalid line {i+1}: {url[:50]}...')
+            failed += 1
+            continue
+        
+        # Extract filename from URL or use index
+        try:
+            filename = url.split('/')[-1]
+            if not filename.endswith('.jpg'):
+                filename = f'{i:06d}.jpg'
+        except:
+            filename = f'{i:06d}.jpg'
+        
+        filepath = images_dir / filename
+        
+        # Skip if already downloaded
+        if filepath.exists():
+            skipped += 1
+            if (i + 1) % 100 == 0:
+                print(f'Progress: {i+1}/{len(lines)} (skipped: {skipped}, downloaded: {downloaded}, failed: {failed})')
+            continue
+        
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            with open(filepath, 'wb') as img_file:
+                img_file.write(response.content)
+            downloaded += 1
+            
+            if (i + 1) % 100 == 0 or downloaded % 100 == 0:
+                print(f'Progress: {i+1}/{len(lines)} (downloaded: {downloaded}, skipped: {skipped}, failed: {failed})')
+        except Exception as e:
+            failed += 1
+            if failed <= 10:  # Only print first 10 failures to avoid spam
+                print(f'Failed to download {url[:50]}...: {e}')
+            elif failed == 11:
+                print('... (suppressing further error messages)')
+    
+    print('\n' + '='*50)
+    print('Download complete!')
+    print(f'Total URLs: {len(lines)}')
+    print(f'Downloaded: {downloaded}')
+    print(f'Skipped (already exists): {skipped}')
+    print(f'Failed: {failed}')
+    print(f'Images saved to: {images_dir}')
+    print(f'{"="*50}')
+
 if __name__ == '__main__':
-    download_images()
+    parser = argparse.ArgumentParser(description='Download images from markup or no-markup data files')
+    parser.add_argument('--type', type=str, default='markup', 
+                       choices=['markup', 'no_markup'],
+                       help='Type of data to download: markup (with labels) or no_markup (unlabeled)')
+    
+    args = parser.parse_args()
+    
+    if args.type == 'markup':
+        download_images()
+    else:
+        download_no_markup_images()
