@@ -34,6 +34,9 @@ def evaluate(pred_path: Path, labels_path: Path, subset: str = "all", seed: int 
     # Load data
     preds_df = pd.read_csv(pred_path)
     labels_df = pd.read_csv(labels_path)
+    
+    print(preds_df.head())
+    print(labels_df.head())
 
     # Merge on filename
     merged = preds_df.merge(labels_df, on="filename", how="inner")
@@ -49,13 +52,14 @@ def evaluate(pred_path: Path, labels_path: Path, subset: str = "all", seed: int 
 
     # Map predictions to numeric for comparison
     def to_num(pred):
-        if pred == "TRUE":
+        if pred == "TRUE" or pred == "True" or pred == True:
             return 1
-        if pred == "FALSE":
+        if pred == "FALSE" or pred == "False" or pred == False:
             return 0
         return None  # uncertain or unknown
 
     merged["pred_num"] = merged["prediction"].apply(to_num)
+    print(merged.head())
 
     # Confident predictions (exclude '?')
     confident = merged[merged["pred_num"].notnull()]
