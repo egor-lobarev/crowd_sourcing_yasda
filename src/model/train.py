@@ -1,5 +1,7 @@
 import torch
+import cv2
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -14,6 +16,42 @@ import argparse
 
 from unet import UNet
 from pretrained_model import PretrainedTreeClassifier
+
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.67, gamma=2.0, reduction='mean'):
+        """
+        Focal loss
+        alpha: Weighting factor for the rare class (usually positive).
+        gamma: Focusing parameter. Higher values (e.g., 2.0) reduce loss for easy examples.
+        """
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+        # inputs: logits (raw output from model)
+        # targets: binary labels (0 or 1)
+        
+        # Calculate BCE with logits
+        bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+        
+        # Get the probabilities (pt)
+        pt = torch.exp(-bce_loss)
+        
+        # Calculate Focal Loss
+        # Formula: -alpha * (1-pt)^gamma * log(pt)
+        focal_loss = self.alpha * (1 - pt) ** self.gamma * bce_loss
+
+        if self.reduction == 'mean':
+            return focal_loss.mean()
+        elif self.reduction == 'sum':
+            return focal_loss.sum()
+        else:
+            return focal_loss
 
 class TreeDataset(Dataset):
     def __init__(self, image_paths, labels, transform=None):
@@ -36,30 +74,92 @@ class TreeDataset(Dataset):
         
         return image, torch.tensor(label, dtype=torch.float32)
 
-def get_transforms(is_train=True, img_size=128):
-    if is_train:
-        return A.Compose([
-            A.Resize(img_size, img_size),
-            A.RandomResizedCrop(size=(img_size, img_size), scale=(0.8, 1.0)),
-            A.Rotate(limit=180, p=0.5),
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
-            A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1, p=0.5),
-            A.Affine(
-            rotate=(-5, 5),           # degrees (range)
-            translate_percent=(-0.1, 0.1),  # fraction of width/height
-            scale=(0.95, 1.05),       # multiplicative scale factor
-            p=0.3
+# def get_transforms(is_train=True, img_size=128, 
+#                    norm_mean=[0.273, 0.337, 0.274], 
+#                    norm_std=[0.131, 0.124, 0.108]):
+    
+#     base_transforms = [
+#         A.Resize(img_size, img_size),
+#         A.Normalize(mean=norm_mean, std=norm_std),
+#         ToTensorV2()
+#     ]
+    
+#     if not is_train:
+#         return A.Compose(base_transforms)
+    
+#     # Insert augmentations BEFORE normalization
+#     augmentations = [
+#         A.HorizontalFlip(p=0.5),
+#         A.VerticalFlip(p=0.5),
+#         A.RandomRotate90(p=0.5),
+#         A.ShiftScaleRotate(
+#             shift_limit=0.0625,
+#             scale_limit=0.1,
+#             rotate_limit=15,
+#             p=0.5
+#         ),
+#         A.RandomBrightnessContrast(
+#             brightness_limit=0.2,
+#             contrast_limit=0.2,
+#             p=0.5
+#         ),
+#     ]
+    
+#     return A.Compose(augmentations + base_transforms)
+
+def get_transforms(is_train=True, img_size=128, 
+                   norm_mean=[0.273, 0.337, 0.274], 
+                   norm_std=[0.131, 0.124, 0.108]):
+    
+    # 1. Resize/Normalize happens at the end
+    base_transforms = [
+        A.Resize(img_size, img_size),
+        A.Normalize(mean=norm_mean, std=norm_std),
+        ToTensorV2()
+    ]
+    
+    if not is_train:
+        return A.Compose(base_transforms)
+    
+    # 2. Augmentations
+    augmentations = [
+        # --- GEOMETRIC ---
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
+        A.RandomRotate90(p=0.5),
+        
+        A.ShiftScaleRotate(
+            shift_limit=0.0625,
+            scale_limit=0.1,
+            rotate_limit=15,
+            # CRITICAL: Use reflection to fill empty corners instead of black
+            border_mode=cv2.BORDER_REFLECT_101, 
+            p=0.5
         ),
-            A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ToTensorV2()
-        ])
-    else:
-        return A.Compose([
-            A.Resize(img_size, img_size),
-            A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ToTensorV2()
-        ])
+
+        # --- SENSOR SIMULATION (New) ---
+        # Helps preventing overfitting to specific camera quality
+        A.OneOf([
+            A.GaussNoise(var_limit=(10.0, 50.0), p=0.5),
+            A.MultiplicativeNoise(multiplier=[0.8, 1.2], p=0.5),
+        ], p=0.3),
+
+        A.OneOf([
+            A.GaussianBlur(blur_limit=(3, 5), p=0.5),
+            A.MotionBlur(blur_limit=(3, 5), p=0.5),
+        ], p=0.2),
+
+        # --- COLOR ---
+        A.RandomBrightnessContrast(
+            brightness_limit=0.2,
+            contrast_limit=0.2,
+            p=0.5
+        ),
+    ]
+    
+    # Note: Augmentations happen BEFORE Resize. 
+    # This is good for quality, but slower if input images are huge.
+    return A.Compose(augmentations + base_transforms)
 
 def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_224', img_size=128, 
                 batch_size=16, num_epochs=50, lr=1e-4):
@@ -89,7 +189,7 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
     
     # Load data
     data_dir = Path('src/data/raw')
-    labels_df = pd.read_csv(data_dir / 'vlm_predictions_a100.csv')
+    labels_df = pd.read_csv(data_dir / 'labels_llm_toloka.csv')
     image_dir = data_dir / 'images'
     
     image_paths = [image_dir / fname for fname in labels_df['filename']]
@@ -97,10 +197,10 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
     
     # Split
     train_paths, temp_paths, train_labels, temp_labels = train_test_split(
-        image_paths, labels, test_size=0.3, random_state=42, stratify=labels
+        image_paths, labels, test_size=0.2, random_state=42, stratify=labels
     )
     val_paths, test_paths, val_labels, test_labels = train_test_split(
-        temp_paths, temp_labels, test_size=0.5, random_state=42, stratify=temp_labels
+        temp_paths, temp_labels, test_size=0.1, random_state=42, stratify=temp_labels
     )
     
     print(f'Train: {len(train_paths)}, Val: {len(val_paths)}, Test: {len(test_paths)}')
@@ -130,19 +230,20 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
         optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # criterion = nn.BCEWithLogitsLoss()
-    train_labels = np.array(train_labels)  # ensure it's array-like
-    num_pos = train_labels.sum()
-    num_neg = len(train_labels) - num_pos
+    criterion = FocalLoss()
+    # train_labels = np.array(train_labels)  # ensure it's array-like
+    # num_pos = train_labels.sum()
+    # num_neg = len(train_labels) - num_pos
 
-    if num_pos == 0:
-        raise ValueError("No positive samples in training set!")
-    if num_neg == 0:
-        raise ValueError("No negative samples in training set!")
+    # if num_pos == 0:
+    #     raise ValueError("No positive samples in training set!")
+    # if num_neg == 0:
+    #     raise ValueError("No negative samples in training set!")
 
-    pos_weight = num_neg / num_pos
-    print(f"Class balance: {num_neg} negatives, {num_pos} positives → pos_weight = {pos_weight:.3f}")
+    # pos_weight = num_neg / num_pos
+    # print(f"Class balance: {num_neg} negatives, {num_pos} positives → pos_weight = {pos_weight:.3f}")
 
-    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight], dtype=torch.float32, device=device))
+    # criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight], dtype=torch.float32, device=device))
     
     # Load checkpoint if exists to continue training
     checkpoint_path = Path(f'src/model/best_model_{model_type}_{model_name if model_type == "pretrained" else "unet"}.pth')
@@ -213,7 +314,7 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
         scheduler.step()
         
         # Save best model based on validation accuracy
-        if val_acc >= best_val_acc:
+        if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_val_loss = val_loss
             model_path = f'src/model/best_model_{model_type}_{model_name if model_type == "pretrained" else "unet"}.pth'

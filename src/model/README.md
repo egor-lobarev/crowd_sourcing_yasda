@@ -48,6 +48,18 @@ python src/model/inference.py \
   --output_csv src/data/raw/predictions.csv \
   --uncertainty_threshold 0.25
 ```
+non upscaled:
+
+```bash
+python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path src/model/toloka_newaug_acc_0.82_best_model_pretrained_convnext_tiny.fb_in22k.pth   --img_size 128   --input_dir src/data/gt/images   --output_csv src/data/gt/new_aug_toloka_predictions.csv   --uncertainty_threshold 0.5
+```
+
+upscaled:
+
+```bash
+python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path src/model/toloka_upscaled_acc_0.83_best_model_pretrained_convnext_tiny.fb_in22k.pth   --img_size 256   --input_dir src/data/gt/images_upscaled   --output_csv src/data/gt/new_aug_toloka_upscaled_predictions.csv   --uncertainty_threshold 0.5
+```
+
 
 Use calibrated probabilities:
 ```bash
@@ -71,11 +83,10 @@ Outputs:
 Evaluate predictions vs labels (optionally on a specific split reproduced with seed=42):
 ```bash
 python src/model/eval_predictions.py \
-  --predictions src/data/gt/pretrained_predictions.csv \
-  --labels src/data/gt/labels.csv \
-  --subset test \
-  --seed 42 \
-  --confusion_png src/data/gt/confusion_heatmap_test.png
+  --predictions src/data/gt/new_aug_toloka_upscaled_predictions.csv \
+  --labels src/data/gt/labels_upscaled.csv \
+  --subset all \
+  --confusion_png src/data/gt/new_aug_toloka_upscaled_heatmap_test.png
 ```
 
 Defaults: `subset=all`, `seed=42`. Metrics: accuracy, precision, recall, F1 (on confident predictions only), coverage, confusion counts, and a heatmap PNG.

@@ -54,9 +54,9 @@ coverage.xml
 .pytest_cache/
 
 # # Downloaded images
-# src/data/images/
-# src/data/gt/images/
-# src/data/raw/images/
+src/data/images_upscaled/
+src/data/gt/images_upscaled/
+src/data/raw/images_upscaled/
 # cover/
 
 # Translations

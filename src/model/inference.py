@@ -12,6 +12,7 @@ import joblib
 
 from pretrained_model import PretrainedTreeClassifier
 from unet import UNet
+from train import get_transforms
 
 
 class ImageDataset(Dataset):
@@ -38,16 +39,6 @@ class ImageDataset(Dataset):
             image = augmented['image']
         
         return image, str(img_path)
-
-
-def get_transforms(img_size=128):
-    """Get validation transforms (no augmentation)"""
-    return A.Compose([
-        A.Resize(img_size, img_size),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2()
-    ])
-
 
 def predict_with_uncertainty(
     model,
@@ -206,7 +197,7 @@ def main():
     print(f'Found {len(image_paths)} images')
     
     # Create dataset and dataloader
-    transform = get_transforms(img_size=args.img_size)
+    transform = get_transforms(is_train=False, img_size=args.img_size)
     dataset = ImageDataset(image_paths, transform=transform)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)
     
