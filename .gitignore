@@ -53,11 +53,11 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Downloaded images
-src/data/images/
-src/data/gt/images/
-src/data/raw/images/
-cover/
+# # Downloaded images
+# src/data/images/
+# src/data/gt/images/
+# src/data/raw/images/
+# cover/
 
 # Translations
 *.mo
