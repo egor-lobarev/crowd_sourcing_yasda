@@ -88,8 +88,8 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
         print(f'Pretrained model: {model_name}')
     
     # Load data
-    data_dir = Path('src/data/gt')
-    labels_df = pd.read_csv(data_dir / 'labels.csv')
+    data_dir = Path('src/data/raw')
+    labels_df = pd.read_csv(data_dir / 'vlm_predictions_a100.csv')
     image_dir = data_dir / 'images'
     
     image_paths = [image_dir / fname for fname in labels_df['filename']]
@@ -129,7 +129,20 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
         model = UNet().to(device)
         optimizer = optim.Adam(model.parameters(), lr=lr)
     
-    criterion = nn.BCEWithLogitsLoss()
+    # criterion = nn.BCEWithLogitsLoss()
+    train_labels = np.array(train_labels)  # ensure it's array-like
+    num_pos = train_labels.sum()
+    num_neg = len(train_labels) - num_pos
+
+    if num_pos == 0:
+        raise ValueError("No positive samples in training set!")
+    if num_neg == 0:
+        raise ValueError("No negative samples in training set!")
+
+    pos_weight = num_neg / num_pos
+    print(f"Class balance: {num_neg} negatives, {num_pos} positives → pos_weight = {pos_weight:.3f}")
+
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight], dtype=torch.float32, device=device))
     
     # Load checkpoint if exists to continue training
     checkpoint_path = Path(f'src/model/best_model_{model_type}_{model_name if model_type == "pretrained" else "unet"}.pth')
@@ -200,7 +213,7 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
         scheduler.step()
         
         # Save best model based on validation accuracy
-        if val_acc > best_val_acc:
+        if val_acc >= best_val_acc:
             best_val_acc = val_acc
             best_val_loss = val_loss
             model_path = f'src/model/best_model_{model_type}_{model_name if model_type == "pretrained" else "unet"}.pth'
