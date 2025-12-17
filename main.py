@@ -5,11 +5,11 @@ import argparse
 
 def download_images():
     """Download images from URLs in hw_3_markup_data.txt and save to src/data/gt/images/"""
-    data_dir = Path('src/data/gt')
+    data_dir = Path('src/data/test')
     images_dir = data_dir / 'images'
     images_dir.mkdir(parents=True, exist_ok=True)
     
-    markup_file = data_dir / 'hw_3_markup_data.txt'
+    markup_file = data_dir / 'model_check.csv'
     
     if not markup_file.exists():
         print(f'Error: {markup_file} not found!')
@@ -57,11 +57,11 @@ def download_images():
 
 def download_no_markup_images():
     """Download images from URLs in hw_3_no_markup_data.txt and save to src/data/raw/images/"""
-    data_dir = Path('src/data/raw')
+    data_dir = Path('src/data/test')
     images_dir = data_dir / 'images'
     images_dir.mkdir(parents=True, exist_ok=True)
     
-    no_markup_file = data_dir / 'hw_3_no_markup_data.txt'
+    no_markup_file = data_dir / 'model_check.csv'
     
     if not no_markup_file.exists():
         print(f'Error: {no_markup_file} not found!')

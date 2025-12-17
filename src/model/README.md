@@ -54,11 +54,30 @@ non upscaled:
 python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path src/model/toloka_newaug_acc_0.82_best_model_pretrained_convnext_tiny.fb_in22k.pth   --img_size 128   --input_dir src/data/gt/images   --output_csv src/data/gt/new_aug_toloka_predictions.csv   --uncertainty_threshold 0.5
 ```
 
+# llm toloka focal
+python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path /alpha/lobarev_e/crowd_sourcing_yasda/src/model/llm_toloka_focal_best_model_pretrained_convnext_tiny.fb_in22k.pth   --img_size 128   --input_dir src/data/gt/images   --output_csv src/data/gt/llm_toloka_focal_predictions.csv   --uncertainty_threshold 0.5
+
+# llm toloka focal new aug
+
+python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path /alpha/lobarev_e/crowd_sourcing_yasda/src/model/llm_toloka_focal_new_aug_best_model_pretrained_convnext_tiny.fb_in22k.pth  --img_size 128   --input_dir src/data/gt/images   --output_csv src/data/gt/llm_toloka_focal_new_aug_predictions.csv   --uncertainty_threshold 0.5
+
+# llm toloka bce
+python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path /alpha/lobarev_e/crowd_sourcing_yasda/src/model/toloka_llm_bce_best_model_pretrained_convnext_tiny.fb_in22k.pth  --img_size 128   --input_dir src/data/gt/images   --output_csv src/data/gt/toloka_llm_bce_predictions.csv   --uncertainty_threshold 0.5
+
 upscaled:
 
 ```bash
 python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path src/model/toloka_upscaled_acc_0.83_best_model_pretrained_convnext_tiny.fb_in22k.pth   --img_size 256   --input_dir src/data/gt/images_upscaled   --output_csv src/data/gt/new_aug_toloka_upscaled_predictions.csv   --uncertainty_threshold 0.5
 ```
+
+
+# llm toloka focal new aug
+
+## gt
+python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path /alpha/lobarev_e/crowd_sourcing_yasda/src/model/toloka_llm_focal_new_aug_upscaled_best_model_pretrained_convnext_tiny.fb_in22k.pth   --img_size 256  --input_dir src/data/gt/images_upscaled   --output_csv src/data/gt/toloka_llm_focal_new_aug_upscaled_predictions.csv   --uncertainty_threshold 0.5
+
+## test test
+python src/model/inference.py   --model_type pretrained   --model_name convnext_tiny.fb_in22k --model_path /alpha/lobarev_e/crowd_sourcing_yasda/src/model/toloka_llm_focal_new_aug_upscaled_best_model_pretrained_convnext_tiny.fb_in22k.pth   --img_size 256  --input_dir src/data/test/images_upscaled   --output_csv src/data/test/toloka_llm_focal_new_aug_upscaled_predictions.csv   --uncertainty_threshold 0.5
 
 
 Use calibrated probabilities:
@@ -88,6 +107,36 @@ python src/model/eval_predictions.py \
   --subset all \
   --confusion_png src/data/gt/new_aug_toloka_upscaled_heatmap_test.png
 ```
+
+# llm_toloka_focal_new_aug
+python src/model/eval_predictions.py \
+  --predictions src/data/gt/llm_toloka_focal_new_aug_predictions.csv \
+  --labels src/data/gt/labels.csv \
+  --subset all \
+  --confusion_png src/data/gt/llm_toloka_focal_new_aug_heatmap_test.png
+
+## upscaled
+
+python src/model/eval_predictions.py \
+  --predictions src/data/gt/toloka_llm_focal_new_aug_upscaled_predictions.csv \
+  --labels src/data/gt/labels_upscaled.csv \
+  --subset all \
+  --confusion_png src/data/gt/toloka_llm_focal_new_aug_heatmap_test.png
+
+
+# llm_toloka_focal
+python src/model/eval_predictions.py \
+  --predictions src/data/gt/llm_toloka_focal_predictions.csv \
+  --labels src/data/gt/labels.csv \
+  --subset all \
+  --confusion_png src/data/gt/llm_toloka_focal_heatmap_test.png
+
+# toloka_llm_bce
+python src/model/eval_predictions.py \
+  --predictions src/data/gt/toloka_llm_bce_predictions.csv \
+  --labels src/data/gt/labels.csv \
+  --subset all \
+  --confusion_png src/data/gt/toloka_llm_bce_heatmap_test.png
 
 Defaults: `subset=all`, `seed=42`. Metrics: accuracy, precision, recall, F1 (on confident predictions only), coverage, confusion counts, and a heatmap PNG.
 

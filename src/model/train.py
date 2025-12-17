@@ -190,7 +190,7 @@ def train_model(model_type='pretrained', model_name='swin_tiny_patch4_window7_22
     # Load data
     data_dir = Path('src/data/raw')
     labels_df = pd.read_csv(data_dir / 'labels_llm_toloka.csv')
-    image_dir = data_dir / 'images'
+    image_dir = data_dir / 'images_upscaled'
     
     image_paths = [image_dir / fname for fname in labels_df['filename']]
     labels = labels_df['label'].values

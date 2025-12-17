@@ -57,6 +57,8 @@ coverage.xml
 src/data/images_upscaled/
 src/data/gt/images_upscaled/
 src/data/raw/images_upscaled/
+src/data/test/images_upscaled/
+src/data/test/images/
 # cover/
 
 # Translations
